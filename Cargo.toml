@@ -8,7 +8,7 @@ authors = ["D.N. Korenev <https://github.com/Kseen715>"]
 repository = "https://github.com/Kseen715/enro"
 readme = "README.md"
 keywords = ["file-analysis", "entropy", "file-type-detection", "cli-tool", "rust"]
-categories = ["command-line-utilities", "file-management"]
+categories = ["command-line-utilities"]
 
 [profile.dev]
 opt-level = 0
