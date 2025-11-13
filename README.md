@@ -13,7 +13,6 @@ A cross-platform (Linux/Windows/macOS) command-line tool written in Rust that an
 - **Magic Number Detection**: Identifies file types by their magic bytes/signatures
 - **Entropy Analysis**: Calculates Shannon entropy to detect encryption and randomness
 - **Recursive Directory Scanning**: Use `-r` flag to analyze entire directory trees
-- **Beautiful Output**: Colored terminal output with progress bars and formatted tables
 - **Cross-Platform**: Works on Linux, Windows, and macOS
 - **Fast & Efficient**: Written in Rust for maximum performance
 
@@ -23,8 +22,6 @@ A cross-platform (Linux/Windows/macOS) command-line tool written in Rust that an
 You need either:
 - **Visual Studio 2017 or later** with C++ build tools, OR
 - **Visual Studio Build Tools** with C++ workload
-
-Download from: https://visualstudio.microsoft.com/downloads/
 
 Alternatively, install MinGW-w64 and use the GNU toolchain:
 ```powershell
@@ -36,11 +33,8 @@ cargo build --target x86_64-pc-windows-gnu
 ```
 
 ### Linux
-```bash
-# Rust should work out of the box
-# If you don't have Rust installed:
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+
+Rust should work out of the box
 
 ### macOS
 ```bash
@@ -94,18 +88,51 @@ enro -r . -b 10485760
 
 ### Command-Line Options
 
-```
+```text
+enro - File Analysis Tool
+
+Analyzes files to detect:
+  - Archive formats (ZIP, RAR, 7Z, TAR, GZIP, etc.)
+  - Document types (PDF, DOCX, etc.)
+  - Image formats (PNG, JPEG, GIF, etc.)
+  - Encrypted or highly compressed data
+  - Random data blobs
+  - Plain text files
+
+Uses magic number detection and Shannon entropy calculation to classify files.
+
 Usage: enro [OPTIONS] <PATH>
 
 Arguments:
-  <PATH>  File or directory to analyze
+  <PATH>
+          File or directory to analyze
 
 Options:
-  -r, --recursive           Recursively scan directories
-  -m, --min-size <MIN_SIZE> Minimum file size to analyze in bytes [default: 0]
-  -b, --max-bytes <MAX_BYTES> Maximum bytes to read for analysis [default: 1048576]
-  -h, --help               Print help
-  -V, --version            Print version
+  -r, --recursive
+          Recursively scan directories
+
+  -m, --min-size <MIN_SIZE>
+          Minimum file size to analyze (in bytes)
+
+          [default: 0]
+
+  -b, --max-bytes <MAX_BYTES>
+          Maximum number of bytes to read for analysis (omit to scan entire file)
+
+  -s, --simple
+          Simple output format (no colors, no tables)
+
+      --summary-only
+          Show only summary (no individual file details)
+
+  -t, --threshold <MIN-MAX>
+          Entropy threshold range (format: min-max, e.g., 7.5-8.0)
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
 ```
 
 ## How It Works
@@ -195,11 +222,12 @@ SUMMARY
 
 ## License
 
-MIT or Apache-2.0 (choose your preference)
+BSD 3-Clause License. See LICENSE file for details.
 
 ## Contributing
 
 Contributions welcome! Feel free to:
+
 - Add more magic number signatures
 - Improve classification algorithms
 - Enhance output formatting
