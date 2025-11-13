@@ -3,9 +3,12 @@ use clap::Parser;
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use prettytable::{Cell, Row, Table};
+use rayon::prelude::*;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
+use sysinfo::System;
 use walkdir::WalkDir;
 
 /// File encryption and randomness analyzer
@@ -48,6 +51,10 @@ struct Args {
     /// Show only summary (no individual file details)
     #[arg(long)]
     summary_only: bool,
+
+    /// Number of threads to use for parallel processing (default: CPU cores)
+    #[arg(short = 'j', long)]
+    threads: Option<usize>,
 
     /// Entropy threshold range (format: min-max, e.g., 7.5-8.0)
     #[arg(short = 't', long, value_name = "MIN-MAX")]
@@ -105,6 +112,14 @@ struct FileAnalysis {
 fn main() -> Result<()> {
     let args = Args::parse();
 
+    // Configure thread pool if specified
+    if let Some(threads) = args.threads {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .context("Failed to set thread count")?;
+    }
+
     let files = collect_files(&args)?;
 
     if files.is_empty() {
@@ -144,17 +159,24 @@ fn main() -> Result<()> {
             .progress_chars("#>-"),
     );
 
-    let mut results = Vec::new();
-
-    for file_path in files {
-        pb.set_message(format!("{}", file_path.display()));
-        
-        if let Ok(analysis) = analyze_file(&file_path, args.max_bytes) {
-            results.push(analysis);
-        }
-        
-        pb.inc(1);
-    }
+    // Use parallel processing with rayon
+    let pb_mutex = Mutex::new(&pb);
+    let results: Vec<FileAnalysis> = files
+        .par_iter()
+        .filter_map(|file_path| {
+            if let Ok(pb_guard) = pb_mutex.lock() {
+                pb_guard.set_message(format!("{}", file_path.display()));
+            }
+            
+            let result = analyze_file(file_path, args.max_bytes).ok();
+            
+            if let Ok(pb_guard) = pb_mutex.lock() {
+                pb_guard.inc(1);
+            }
+            
+            result
+        })
+        .collect();
 
     if !args.simple {
         pb.finish_with_message("Analysis complete!");
@@ -231,24 +253,93 @@ fn collect_files(args: &Args) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
+// Calculate optimal chunk size based on available RAM and thread count
+fn get_optimal_chunk_size() -> usize {
+    static CHUNK_SIZE: OnceLock<usize> = OnceLock::new();
+    
+    *CHUNK_SIZE.get_or_init(|| {
+        let mut sys = System::new_all();
+        sys.refresh_memory();
+        
+        let available_ram = sys.available_memory() as usize;
+        let thread_count = rayon::current_num_threads();
+        
+        // Calculate: available_ram / (threads + 2), capped at 1GB
+        let divisor = (thread_count * 2).max(4); // Ensure at least 4 to avoid too large chunks
+        let chunk_size = available_ram / divisor;
+        const MAX_CHUNK: usize = 1024 * 1024 * 1024; // 1GB
+        const MIN_CHUNK: usize = 1024 * 1024; // 1MB minimum
+        
+        chunk_size.min(MAX_CHUNK).max(MIN_CHUNK)
+    })
+}
+
 fn analyze_file(path: &Path, max_bytes: Option<usize>) -> Result<FileAnalysis> {
     let metadata = fs::metadata(path).context("Failed to read file metadata")?;
     let size = metadata.len();
 
     let mut file = File::open(path).context("Failed to open file")?;
     
+    // Use dynamically calculated chunk size
+    let chunk_size = get_optimal_chunk_size();
+    
     let bytes_to_read = if let Some(max) = max_bytes {
         max.min(size as usize)
     } else {
-        size as usize // Read entire file if no limit specified
+        size as usize // Read entire file
     };
     
-    let mut buffer = vec![0u8; bytes_to_read];
-    let bytes_read = file.read(&mut buffer).context("Failed to read file")?;
-    buffer.truncate(bytes_read);
-
-    let file_type = detect_file_type(&buffer);
-    let entropy = calculate_entropy(&buffer);
+    // For small files, read all at once
+    if bytes_to_read <= chunk_size {
+        let mut buffer = vec![0u8; bytes_to_read];
+        let bytes_read = file.read(&mut buffer).context("Failed to read file")?;
+        buffer.truncate(bytes_read);
+        
+        let file_type = detect_file_type(&buffer);
+        let entropy = calculate_entropy(&buffer);
+        
+        return Ok(FileAnalysis {
+            path: path.to_path_buf(),
+            file_type,
+            entropy,
+            size,
+        });
+    }
+    
+    // For large files, read in chunks and aggregate statistics
+    let mut total_read = 0;
+    let mut first_chunk = Vec::new();
+    let mut byte_counts = [0u64; 256];
+    
+    while total_read < bytes_to_read {
+        let current_chunk_size = chunk_size.min(bytes_to_read - total_read);
+        let mut chunk = vec![0u8; current_chunk_size];
+        let bytes_read = file.read(&mut chunk).context("Failed to read file chunk")?;
+        
+        if bytes_read == 0 {
+            break; // EOF
+        }
+        
+        chunk.truncate(bytes_read);
+        
+        // Save first chunk for file type detection
+        if total_read == 0 {
+            first_chunk = chunk.clone();
+        }
+        
+        // Count byte frequencies for entropy calculation
+        for &byte in &chunk {
+            byte_counts[byte as usize] += 1;
+        }
+        
+        total_read += bytes_read;
+    }
+    
+    // Detect file type from first chunk
+    let file_type = detect_file_type(&first_chunk);
+    
+    // Calculate entropy from aggregated byte counts
+    let entropy = calculate_entropy_from_counts(&byte_counts, total_read);
 
     Ok(FileAnalysis {
         path: path.to_path_buf(),
@@ -454,10 +545,18 @@ fn calculate_entropy(data: &[u8]) -> f64 {
         frequency[byte as usize] += 1;
     }
 
-    let len = data.len() as f64;
+    calculate_entropy_from_counts(&frequency, data.len())
+}
+
+fn calculate_entropy_from_counts(frequency: &[u64; 256], total_bytes: usize) -> f64 {
+    if total_bytes == 0 {
+        return 0.0;
+    }
+
+    let len = total_bytes as f64;
     let mut entropy = 0.0;
 
-    for &count in &frequency {
+    for &count in frequency {
         if count > 0 {
             let p = count as f64 / len;
             entropy -= p * p.log2();

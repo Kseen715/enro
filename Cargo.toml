@@ -1,6 +1,6 @@
 [package]
 name = "enro"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 license = "BSD-3-Clause"
 description = "A command-line tool for file type detection and entropy analysis"
@@ -37,3 +37,5 @@ prettytable-rs = "0.10"
 walkdir = "2.5"
 terminal_size = "0.4"
 infer = "0.16"
+rayon = "1.10"
+sysinfo = "0.33"
