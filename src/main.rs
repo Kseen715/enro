@@ -105,14 +105,6 @@ struct FileAnalysis {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    if !args.simple {
-        println!(
-            "\n{} {}\n",
-            "🔍 File Analysis Tool".bold().cyan(),
-            "v1.0".dimmed()
-        );
-    }
-
     let files = collect_files(&args)?;
 
     if files.is_empty() {
