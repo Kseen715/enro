@@ -4,6 +4,11 @@ version = "0.1.1"
 edition = "2021"
 license = "BSD-3-Clause"
 description = "A command-line tool for file type detection and entropy analysis"
+authors = ["D.N. Korenev <https://github.com/Kseen715>"]
+repository = "https://github.com/Kseen715/enro"
+readme = "README.md"
+keywords = ["file-analysis", "entropy", "file-type-detection", "cli-tool", "rust"]
+categories = ["command-line-utilities", "file-management"]
 
 [profile.dev]
 opt-level = 0
