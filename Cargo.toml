@@ -1,6 +1,6 @@
 [package]
 name = "enro"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "BSD-3-Clause"
 description = "A command-line tool for file type detection and entropy analysis"

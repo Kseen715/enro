@@ -101,7 +101,7 @@ Analyzes files to detect:
 
 Uses magic number detection and Shannon entropy calculation to classify files.
 
-Usage: enro [OPTIONS] <PATH>
+Usage: enro.exe [OPTIONS] <PATH>
 
 Arguments:
   <PATH>
@@ -124,6 +124,9 @@ Options:
 
       --summary-only
           Show only summary (no individual file details)
+
+  -j, --threads <THREADS>
+          Number of threads to use for parallel processing (default: CPU cores)
 
   -t, --threshold <MIN-MAX>
           Entropy threshold range (format: min-max, e.g., 7.5-8.0)
