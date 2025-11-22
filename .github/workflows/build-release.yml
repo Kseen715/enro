@@ -52,6 +52,7 @@ jobs:
     strategy:
       matrix:
         include:
+          # Linux targets
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             platform: linux_x86_64
@@ -68,6 +69,7 @@ jobs:
             target: armv7-unknown-linux-gnueabihf
             platform: linux_armv7
             cross: true
+          # Windows targets
           - os: ubuntu-latest
             target: x86_64-pc-windows-msvc
             platform: win_x86_64
@@ -80,14 +82,15 @@ jobs:
             target: aarch64-pc-windows-msvc
             platform: win_aarch64
             cross: true
-          - os: ubuntu-latest
+          # macOS targets (need macOS runners)
+          - os: macos-latest
             target: x86_64-apple-darwin
             platform: mac_x86_64
-            cross: true
-          - os: ubuntu-latest
+            cross: false
+          - os: macos-latest
             target: aarch64-apple-darwin
             platform: mac_aarch64
-            cross: true
+            cross: false
 
     steps:
       - name: Checkout code
@@ -99,15 +102,18 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install cross
+        if: contains(matrix.os, 'ubuntu')
         uses: taiki-e/install-action@v2
         with:
           tool: cross
 
       - name: Build for target
         run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
+          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os, 'ubuntu') }}" = "true" ]; then
+            # Use cross for Linux-based cross-compilation
             cross build --target ${{ matrix.target }} --release
           else
+            # Use regular cargo on native platforms (macOS, or Linux native build)
             cargo build --target ${{ matrix.target }} --release
           fi
 
