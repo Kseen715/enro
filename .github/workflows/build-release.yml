@@ -100,11 +100,11 @@ jobs:
 
       - name: Build for target
         run: |
-          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os, 'ubuntu') }}" = "true" ]; then
-            # Use cross for Linux-based cross-compilation
+          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os, 'ubuntu') }}" = "true" ] && [[ "${{ matrix.target }}" != *"pc-windows-msvc"* ]]; then
+            # Use cross for Linux-based cross-compilation (not for Windows targets)
             cross build --target ${{ matrix.target }} --release
           else
-            # Use regular cargo on native platforms (macOS, or Linux native build)
+            # Use regular cargo on native platforms or for Windows cross-compilation from Linux
             cargo build --target ${{ matrix.target }} --release
           fi
 
