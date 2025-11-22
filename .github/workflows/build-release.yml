@@ -148,6 +148,7 @@ jobs:
           sudo apt-get install -y rpm
 
           mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
+          # Copy the binary to the BUILD directory with the correct name
           cp enro enro-rpm/BUILD/enro
 
           # Create .spec file
@@ -167,11 +168,11 @@ jobs:
           /usr/local/bin/enro
 
           %changelog
-          * $(date +"%%a %%b %%d %%Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version.outputs.version }}-1
+          * $(LC_TIME=C date +"%%a %%b %%d %%Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version.outputs.version }}-1
           - Initial package
           EOF
 
-          # Build the RPM package
+          # Build the RPM package with correct topdir path
           rpmbuild -bb enro-rpm/SPECS/enro.spec --define "_topdir $(pwd)/enro-rpm" --target $ARCH
 
           # Find and move the RPM to current directory with a clear name
