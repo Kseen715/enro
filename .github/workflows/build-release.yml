@@ -186,9 +186,15 @@ jobs:
           /usr/local/bin/enro
 
           %changelog
-          * $(date -R) D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version-and-tag-check.outputs.version }}-1
+          * $(date +"%%a %%b %%d %%Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version-and-tag-check.outputs.version }}-1
           - Initial package
           EOF
+
+          # Create the necessary directories in BUILDROOT
+          mkdir -p enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin
+
+          # Copy the binary to the expected location in BUILDROOT
+          cp enro enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin/enro
 
           # Build the RPM package with correct topdir path
           rpmbuild -bb enro-rpm/SPECS/enro.spec --define "_topdir $(pwd)/enro-rpm" --target $RPM_ARCH
