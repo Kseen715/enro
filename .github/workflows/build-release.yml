@@ -170,7 +170,7 @@ jobs:
           cp enro enro-rpm/BUILD/enro
 
           # Create .spec file
-          cat << EOF > enro-rpm/SPECS/enro.spec
+          cat << 'EOF' > enro-rpm/SPECS/enro.spec
           Name:           enro
           Version:        ${{ needs.extract-version-and-tag-check.outputs.version }}
           Release:        1%{?dist}
