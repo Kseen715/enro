@@ -122,15 +122,19 @@ jobs:
         run: |
           cd artifacts
 
-          # Determine architecture based on target
+          # Determine architecture based on target for packaging
           if [ "${{ matrix.target }}" = "i686-unknown-linux-gnu" ]; then
-            ARCH="i686"
+            PKG_ARCH="i386"
+            RPM_ARCH="i686"
           elif [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
-            ARCH="x86_64"
+            PKG_ARCH="amd64"
+            RPM_ARCH="x86_64"
           elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
-            ARCH="aarch64"
+            PKG_ARCH="arm64"
+            RPM_ARCH="aarch64"
           elif [ "${{ matrix.target }}" = "armv7-unknown-linux-gnueabihf" ]; then
-            ARCH="armv7"
+            PKG_ARCH="armhf"
+            RPM_ARCH="armv7hl"
           fi
 
           # Create tar.gz
@@ -148,7 +152,7 @@ jobs:
           Version: ${{ needs.extract-version-and-tag-check.outputs.version }}
           Section: utils
           Priority: optional
-          Architecture: $ARCH
+          Architecture: $PKG_ARCH
           Depends:
           Maintainer: D.N. Korenev
           Description: A command-line tool for file type detection and entropy analysis
@@ -173,7 +177,7 @@ jobs:
           Summary:        A command-line tool for file type detection and entropy analysis
 
           License:        BSD
-          BuildArch:      $ARCH
+          BuildArch:      $RPM_ARCH
 
           %description
           A command-line tool for file type detection and entropy analysis
@@ -187,7 +191,7 @@ jobs:
           EOF
 
           # Build the RPM package with correct topdir path
-          rpmbuild -bb enro-rpm/SPECS/enro.spec --define "_topdir $(pwd)/enro-rpm" --target $ARCH
+          rpmbuild -bb enro-rpm/SPECS/enro.spec --define "_topdir $(pwd)/enro-rpm" --target $RPM_ARCH
 
           # Find and move the RPM to current directory with a clear name
           RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
