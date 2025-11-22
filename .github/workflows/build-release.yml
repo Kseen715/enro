@@ -169,15 +169,16 @@ jobs:
           # Copy the binary to the BUILD directory with the correct name
           cp enro enro-rpm/BUILD/enro
 
-          # Create .spec file
-          cat << 'EOF' > enro-rpm/SPECS/enro.spec
+          # Create .spec file - use a temporary replacement approach for RPM_ARCH
+          sed -e "s|@RPM_ARCH@|$RPM_ARCH|g" \
+              -e "s|@VERSION@|${{ needs.extract-version-and-tag-check.outputs.version }}|g" > enro-rpm/SPECS/enro.spec << 'EOF'
           Name:           enro
-          Version:        ${{ needs.extract-version-and-tag-check.outputs.version }}
+          Version:        @VERSION@
           Release:        1%{?dist}
           Summary:        A command-line tool for file type detection and entropy analysis
 
           License:        BSD
-          BuildArch:      $RPM_ARCH
+          BuildArch:      @RPM_ARCH@
 
           %description
           A command-line tool for file type detection and entropy analysis
@@ -186,7 +187,7 @@ jobs:
           /usr/local/bin/enro
 
           %changelog
-          * $(date +"%%a %%b %%d %%Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version-and-tag-check.outputs.version }}-1
+          * $(LC_TIME=C date +"%%a %%b %%d %%Y") D.N. Korenev <https://github.com/Kseen715> - @VERSION@-1
           - Initial package
           EOF
 
