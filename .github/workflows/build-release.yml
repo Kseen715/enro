@@ -62,15 +62,15 @@ jobs:
             cross: true
           # Windows targets
           - os: ubuntu-latest
-            target: x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-gnu
             platform: win_x86_64
             cross: true
           - os: ubuntu-latest
-            target: i686-pc-windows-msvc
+            target: i686-pc-windows-gnu
             platform: win_x86
             cross: true
           - os: ubuntu-latest
-            target: aarch64-pc-windows-msvc
+            target: aarch64-pc-windows-gnu
             platform: win_aarch64
             cross: true
           # macOS targets (need macOS runners)
