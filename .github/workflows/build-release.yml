@@ -89,8 +89,8 @@ jobs:
 
       - name: Install llvm-mingw
         run: |
-            if [[ "${{ matrix.target }}" != *"pc-windows-gnullvm"* ]]; then
-                wget https://github.com/mstorsjo/llvm-mingw/releases/download/20230427/llvm-mingw-20230427-ucrt-ubuntu-22.04-x86_64.tar.xz
+            if [[ "${{ matrix.target }}" = *"pc-windows-gnullvm"* ]]; then
+                wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251118/llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64.tar.xz
                 tar -xf llvm-mingw-*.tar.xz
                 echo "$PWD/llvm-mingw-*/bin" >> $GITHUB_PATH
             fi
