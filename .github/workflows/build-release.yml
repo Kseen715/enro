@@ -214,6 +214,7 @@ jobs:
           # Create MSI installer using WiX Toolset
           # For now, we'll just create a zip as a placeholder for Windows installer
           # Full MSI creation would require more complex WiX configuration
+        shell: pwsh
 
       - name: Create installer packages (macOS)
         if: contains(matrix.os, 'macos')
