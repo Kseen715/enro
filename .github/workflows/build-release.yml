@@ -90,29 +90,40 @@ jobs:
       - name: Install llvm-mingw (pc-windows-gnullvm)
         if: contains(matrix.target, 'pc-windows-gnullvm')
         run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download  20251118/llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64.tar.xz
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251118/llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64.tar.xz
           tar -xf llvm-mingw-*.tar.xz
-          echo "$PWD/llvm-mingw-*/bin" >> $GITHUB_PATH
-          clang --version 
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
+          LLVM_MINGW_DIR=$(ls -d llvm-mingw-*/)
+          echo "$LLVM_MINGW_DIR/bin" >> $GITHUB_PATH
+          clang --version
+          
+          - name: Install Rust
+          uses: dtolnay/rust-toolchain@stable
+          with:
+            targets: ${{ matrix.target }}
+            
       - name: Install cross
         if: contains(matrix.os, 'ubuntu')
         uses: taiki-e/install-action@v2
         with:
-          tool: cross
+            tool: cross
 
+      - name: Configure linker (aarch64-pc-windows-gnullvm)
+        if: matrix.target == 'aarch64-pc-windows-gnullvm'
+        run: |
+            mkdir -p .cargo
+            cat > .cargo/config.toml <<EOF
+            [target.aarch64-pc-windows-gnullvm]
+            linker = "aarch64-w64-mingw32-clang"
+            rustflags = ["-C", "link-arg=--subsystem:console"]
+            EOF
+            
       - name: Build for target
         run: |
-          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os, 'ubuntu') }}" = "true" ] && [[ "${{ matrix.target }}" != *"pc-windows-msvc"* ]]; then
-            # Use cross for Linux-based cross-compilation (not for Windows targets)
+          if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os,   'ubuntu') }}" = "true" ] && [[ "${{ matrix.target }}" !=   *"pc-windows-msvc"* ]]; then
+            # Use cross for Linux-based cross-compilation (not for Windows   targets)
             cross build --target ${{ matrix.target }} --release
           else
-            # Use regular cargo on native platforms or for Windows cross-compilation from Linux
+            # Use regular cargo on native platforms or for Windows     cross-compilation from Linux
             cargo build --target ${{ matrix.target }} --release
           fi
 
