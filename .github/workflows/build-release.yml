@@ -188,8 +188,8 @@ jobs:
             mv enro-deb.deb "$BINARY.deb"
 
             # Create .rpm package
-            if [ "$RPM_ARCH" = "i686" ]; then
-            echo "Building i686 RPM in Docker..."
+            if [ "$RPM_ARCH" = "i686" ] || [ "$RPM_ARCH" = "armv7hl" ]; then
+            echo "Building $RPM_ARCH RPM in Docker..."
 
             mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
             cp "$BINARY" enro-rpm/BUILD/enro
@@ -200,7 +200,7 @@ jobs:
             Release:        1%{?dist}
             Summary:        A command-line tool for file type detection and entropy analysis
             License:        BSD
-            BuildArch:      i686
+            BuildArch:      $RPM_ARCH
 
             %description
             A command-line tool for file type detection and entropy analysis
@@ -227,7 +227,7 @@ jobs:
             if [ -n "$RPM_FILE" ]; then
                 mv "$RPM_FILE" "$BINARY.rpm"
             else
-                echo "WARNING: No RPM file produced for i686"
+                echo "WARNING: No RPM file produced for $RPM_ARCH"
             fi
 
             else
