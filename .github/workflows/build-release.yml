@@ -237,9 +237,6 @@ jobs:
                     set -e
                     dnf install -y mock rpm-build
                     usermod -a -G mock builder 2>/dev/null || true
-                    echo '[build]
-            chrootgid = 1000
-            chrootuid = 1000' > /etc/mock/site-defaults.cfg
 
                     # Initialize mock chroot
                     mock -r $MOCK_CONFIG --init
