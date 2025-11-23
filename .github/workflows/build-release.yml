@@ -210,7 +210,6 @@ jobs:
 
             %description
             A command-line tool for file type detection and entropy analysis
-
             %prep
 
             %build
