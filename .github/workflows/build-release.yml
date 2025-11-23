@@ -114,7 +114,6 @@ jobs:
             cat > .cargo/config.toml <<EOF
             [target.aarch64-pc-windows-gnullvm]
             linker = "aarch64-w64-mingw32-clang"
-            rustflags = ["-C", "link-arg=--subsystem:console"]
             EOF
             
       - name: Build for target
