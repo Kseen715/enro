@@ -226,7 +226,8 @@ jobs:
                 echo '%_compatible_archs %{_arch} $RPM_ARCH' >> ~/.rpmmacros
                 rpmbuild -bb rpmbuild/SPECS/enro.spec \
                     --define '_topdir /root/rpmbuild' \
-                    --define '_buildroot /root/rpmbuild/BUILDROOT/enro-$VERSION-$RPM_ARCH'"
+                    --define '_buildroot /root/rpmbuild/BUILDROOT/enro-$VERSION-$RPM_ARCH'" \
+                    --target $RPM_ARCH
 
             RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
             if [ -n "$RPM_FILE" ]; then
