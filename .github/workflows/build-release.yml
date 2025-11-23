@@ -167,19 +167,18 @@ jobs:
                 RPM_ARCH="armv7hl"
             fi
 
-            # Create .deb package (unchanged)
+            # Create .deb package
             mkdir -p enro-deb/usr/local/bin enro-deb/DEBIAN
             cp "$BINARY" enro-deb/usr/local/bin/enro
             chmod +x enro-deb/usr/local/bin/enro
-            cat << EOF > enro-deb/DEBIAN/control
-            Package: enro
-            Version: $VERSION
-            Section: utils
-            Priority: optional
-            Architecture: $PKG_ARCH
-            Maintainer: D.N. Korenev
-            Description: A command-line tool for file type detection and entropy analysis
-            EOF
+            printf "%s\n" \
+              "Package: enro" \
+              "Version: $VERSION" \
+              "Section: utils" \
+              "Priority: optional" \
+              "Architecture: $PKG_ARCH" \
+              "Maintainer: D.N. Korenev" \
+              "Description: A command-line tool for file type detection and entropy analysis" > enro-deb/DEBIAN/control
             dpkg-deb --build enro-deb
             mv enro-deb.deb "$BINARY.deb"
 
@@ -203,24 +202,22 @@ jobs:
                 cp "$BINARY" enro-rpm/BUILDROOT/usr/local/bin/enro
                 chmod +x enro-rpm/BUILDROOT/usr/local/bin/enro
 
-                # Create spec file
-                cat << EOF > enro-rpm/SPECS/enro.spec
-                Name:           enro
-                Version:        $VERSION
-                Release:        1%{?dist}
-                Summary:        A command-line tool for file type detection and entropy analysis
-                License:        MIT
-
-                %description
-                A command-line tool for file type detection and entropy analysis
-
-                %files
-                /usr/local/bin/enro
-
-                %post
-                chmod +x /usr/local/bin/enro
-
-            EOF
+                # Create spec file using printf
+                printf "%s\n" \
+                  "Name:           enro" \
+                  "Version:        $VERSION" \
+                  "Release:        1%{?dist}" \
+                  "Summary:        A command-line tool for file type detection and entropy analysis" \
+                  "License:        MIT" \
+                  "" \
+                  "%description" \
+                  "A command-line tool for file type detection and entropy analysis" \
+                  "" \
+                  "%files" \
+                  "/usr/local/bin/enro" \
+                  "" \
+                  "%post" \
+                  "chmod +x /usr/local/bin/enro" > enro-rpm/SPECS/enro.spec
 
                 # Build RPM
                 rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" -bb enro-rpm/SPECS/enro.spec
