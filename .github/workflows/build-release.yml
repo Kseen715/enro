@@ -95,12 +95,12 @@ jobs:
           LLVM_MINGW_DIR=$(ls -d llvm-mingw-*/)
           echo "$LLVM_MINGW_DIR/bin" >> $GITHUB_PATH
           clang --version
-          
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-            
+
       - name: Install cross
         if: contains(matrix.os, 'ubuntu')
         uses: taiki-e/install-action@v2
@@ -115,7 +115,7 @@ jobs:
             [target.aarch64-pc-windows-gnullvm]
             linker = "aarch64-w64-mingw32-clang"
             EOF
-            
+
       - name: Build for target
         run: |
           if [ "${{ matrix.cross }}" = "true" ] && [ "${{ contains(matrix.os,   'ubuntu') }}" = "true" ] && [[ "${{ matrix.target }}" !=   *"pc-windows-msvc"* ]]; then
@@ -238,8 +238,8 @@ jobs:
                     dnf install -y mock rpm-build
                     usermod -a -G mock builder 2>/dev/null || true
                     echo '[build]
-            chrootgid = $(id -g)
-            chrootuid = $(id -u)' > /etc/mock/site-defaults.cfg
+            chrootgid = 1000
+            chrootuid = 1000' > /etc/mock/site-defaults.cfg
 
                     # Initialize mock chroot
                     mock -r $MOCK_CONFIG --init
@@ -247,7 +247,7 @@ jobs:
                     # Build RPM from spec and source
                     mock -r $MOCK_CONFIG --buildsrpm --spec SPECS/enro.spec --sources SOURCES/
                     mock -r $MOCK_CONFIG --rpmbuild-opts '--define=dist .el8' --rebuild \$(find /builddir -name '*.src.rpm')
-                    
+
                     # Copy out RPMs
                     cp /var/lib/mock/$MOCK_CONFIG/result/*.rpm /builddir/ 2>/dev/null || true
                 "
@@ -285,7 +285,7 @@ jobs:
           VERSION="${{ needs.extract-version-and-tag-check.outputs.version }}"
           PLATFORM="${{ matrix.platform }}"
           BINARY="enro-$VERSION-$PLATFORM"
-         
+
           cd artifacts
 
           # Create tar.gz
