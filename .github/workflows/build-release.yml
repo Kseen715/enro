@@ -194,6 +194,9 @@ jobs:
             mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
             cp "$BINARY" enro-rpm/BUILD/enro
 
+            mkdir -p "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin"
+            cp "$BINARY" "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin/enro"
+
             cat > enro-rpm/SPECS/enro.spec << EOF
             Name:           enro
             Version:        $VERSION
@@ -219,9 +222,10 @@ jobs:
                 almalinux:8 \
                 /bin/bash -c "
                 set -e
-                dnf install -y rpm-build which
-                rpmbuild -bb rpmbuild/SPECS/enro.spec
-                "
+                dnf install -y rpm-build
+                rpmbuild -bb rpmbuild/SPECS/enro.spec \
+                    --define '_topdir /root/rpmbuild' \
+                    --define '_buildroot /root/rpmbuild/BUILDROOT/enro-$VERSION-$RPM_ARCH'"
 
             RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
             if [ -n "$RPM_FILE" ]; then
