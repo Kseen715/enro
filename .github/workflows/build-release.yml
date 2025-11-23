@@ -156,19 +156,15 @@ jobs:
             if [ "${{ matrix.target }}" = "i686-unknown-linux-gnu" ]; then
                 PKG_ARCH="i386"
                 RPM_ARCH="i686"
-                MOCK_CONFIG="fedora-40-i386"
             elif [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
                 PKG_ARCH="amd64"
                 RPM_ARCH="x86_64"
-                MOCK_CONFIG="fedora-40-x86_64"
             elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
                 PKG_ARCH="arm64"
                 RPM_ARCH="aarch64"
-                MOCK_CONFIG="fedora-40-aarch64"
             elif [ "${{ matrix.target }}" = "armv7-unknown-linux-gnueabihf" ]; then
                 PKG_ARCH="armhf"
                 RPM_ARCH="armv7hl"
-                MOCK_CONFIG="fedora-40-armhfp"
             fi
 
             # Create .deb package (unchanged)
@@ -190,73 +186,47 @@ jobs:
             # Create tar.gz
             tar -czf "$BINARY.tar.gz" "$BINARY"
 
-            # --- RPM via mock in container ---
-            echo "Building RPM for $RPM_ARCH using mock in container..."
+            # Create RPM package only for x86_64 and aarch64
+            if [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+                # Install rpmbuild if not available
+                if ! command -v rpmbuild &> /dev/null; then
+                    sudo apt-get update
+                    sudo apt-get install -y rpm
+                fi
 
-            # Prepare source structure for RPM
-            SRCDIR="mock-rpm"
-            mkdir -p "$SRCDIR/BUILD" "$SRCDIR/BUILDROOT" "$SRCDIR/RPMS" "$SRCDIR/SOURCES" "$SRCDIR/SPECS" "$SRCDIR/SRPMS"
-            cp "$BINARY" "$SRCDIR/SOURCES/"
+                # Create RPM build directory structure
+                mkdir -p enro-rpm/BUILD
+                mkdir -p enro-rpm/BUILDROOT/usr/local/bin
+                mkdir -p enro-rpm/SPECS
 
-            # Create spec file
-            cat > "$SRCDIR/SPECS/enro.spec" << EOF
-            Name:           enro
-            Version:        $VERSION
-            Release:        1%{?dist}
-            Summary:        A command-line tool for file type detection and entropy analysis
-            License:        BSD
-            BuildArch:      $RPM_ARCH
-            Source0:        %{name}-%{version}-%{RPM_ARCH}
+                # Copy binary to BUILDROOT
+                cp "$BINARY" enro-rpm/BUILDROOT/usr/local/bin/enro
+                chmod +x enro-rpm/BUILDROOT/usr/local/bin/enro
 
-            %description
-            A command-line tool for file type detection and entropy analysis
-            %prep
+                # Create spec file
+                cat << EOF > enro-rpm/SPECS/enro.spec
+                Name:           enro
+                Version:        $VERSION
+                Release:        1%{?dist}
+                Summary:        A command-line tool for file type detection and entropy analysis
+                License:        MIT
 
-            %build
+                %description
+                A command-line tool for file type detection and entropy analysis
 
-            %install
-            rm -rf \$RPM_BUILD_ROOT
-            mkdir -p \$RPM_BUILD_ROOT/usr/local/bin
-            cp %{SOURCE0} \$RPM_BUILD_ROOT/usr/local/bin/enro
-            chmod +x \$RPM_BUILD_ROOT/usr/local/bin/enro
+                %files
+                /usr/local/bin/enro
 
-            %files
-            /usr/local/bin/enro
+                %post
+                chmod +x /usr/local/bin/enro
 
-            %changelog
-            * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715> - $VERSION-1
-            - Initial package
-            EOF
+                EOF
 
-            # Use Fedora container with mock preinstalled
-            docker run --rm \
-                -v "$PWD/$SRCDIR:/builddir" \
-                -w /builddir \
-                fedora:40 \
-                /bin/bash -c "
-                    set -e
-                    dnf install -y mock rpm-build
-                    usermod -a -G mock builder 2>/dev/null || true
+                # Build RPM
+                rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" -bb enro-rpm/SPECS/enro.spec
 
-                    # Initialize mock chroot
-                    mock -r $MOCK_CONFIG --init
-
-                    # Build RPM from spec and source
-                    mock -r $MOCK_CONFIG --buildsrpm --spec SPECS/enro.spec --sources SOURCES/
-                    mock -r $MOCK_CONFIG --rpmbuild-opts '--define=dist .el8' --rebuild \$(find /builddir -name '*.src.rpm')
-
-                    # Copy out RPMs
-                    cp /var/lib/mock/$MOCK_CONFIG/result/*.rpm /builddir/ 2>/dev/null || true
-                "
-
-            # Move resulting RPM
-            RPM_FILE=$(find "$SRCDIR" -name "*.rpm" -not -name "*.src.rpm" | head -n1)
-            if [ -n "$RPM_FILE" ]; then
-                mv "$RPM_FILE" "$BINARY.rpm"
-                echo "Successfully built RPM: $BINARY.rpm"
-            else
-                echo "WARNING: No RPM produced for $RPM_ARCH"
-                # Optionally fail or continue
+                # Find and copy the built RPM
+                find enro-rpm -name "*.rpm" -exec cp {} "$BINARY.rpm" \;
             fi
 
       - name: Create installer packages (Windows)
@@ -347,5 +317,5 @@ jobs:
             The release includes various installer formats:
             - ZIP archives for Windows and macOS
             - tar.gz archives for all platforms
-            - DEB packages for Debian/Ubuntu Linux
-            - RPM packages for RedHat/Fedora Linux
+            - DEB packages for Debian/Ubuntu Linux (all Linux targets)
+            - RPM packages for RedHat/Fedora Linux (x86_64 and aarch64)
