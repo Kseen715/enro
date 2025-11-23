@@ -133,7 +133,15 @@ jobs:
             if [[ "${{ matrix.target }}" == *"-pc-windows-"* ]]; then
             BINARY_NAME="enro.exe"
             fi
-            cp "target/${{ matrix.target }}/release/$BINARY_NAME" "artifacts/$BINARY_NAME"
+
+            # Determine final artifact name with platform
+            if [[ "${{ matrix.target }}" == *"-pc-windows-"* ]]; then
+            FINAL_NAME="enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.exe"
+            else
+            FINAL_NAME="enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}"
+            fi
+
+            cp "target/${{ matrix.target }}/release/$BINARY_NAME" "artifacts/$FINAL_NAME"
 
       - name: Create installer packages (Linux)
         if: contains(matrix.target, 'linux')
@@ -328,7 +336,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.extract-version-and-tag-check.outputs.version }}
-          release_name: "Release v${{ needs.extract-version-and-tag-check.outputs.version }}"
+          name: "Release v${{ needs.extract-version-and-tag-check.outputs.version }}"
           draft: false
           prerelease: false
           files: |
