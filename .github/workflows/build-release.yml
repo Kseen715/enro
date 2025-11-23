@@ -137,7 +137,7 @@ jobs:
             cp "target/${{ matrix.target }}/release/$BINARY_NAME" "artifacts/$BINARY_NAME"
 
       - name: Create installer packages (Linux)
-        if: contains(matrix.os, 'ubuntu')
+        if: contains(matrix.target, 'linux')
         run: |
           cd artifacts
 
@@ -266,7 +266,7 @@ jobs:
             fi
 
       - name: Create installer packages (Windows)
-        if: contains(matrix.os, 'windows')
+        if: contains(matrix.target, 'windows')
         run: |
           cd artifacts
 
@@ -278,8 +278,8 @@ jobs:
           # Full MSI creation would require more complex WiX configuration
         shell: pwsh
 
-      - name: Create installer packages (macOS)
-        if: contains(matrix.os, 'macos')
+      - name: Create installer packages (Darwin)
+        if: contains(matrix.target, 'darwin')
         run: |
           cd artifacts
 
