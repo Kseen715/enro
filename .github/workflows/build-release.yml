@@ -129,12 +129,12 @@ jobs:
 
       - name: Create artifacts directory
         run: |
-          mkdir -p artifacts
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cp target/${{ matrix.target }}/release/enro.exe artifacts/
-          else
-            cp target/${{ matrix.target }}/release/enro artifacts/
-          fi
+            mkdir -p artifacts
+            BINARY_NAME="enro"
+            if [[ "${{ matrix.target }}" == *"-pc-windows-"* ]]; then
+            BINARY_NAME="enro.exe"
+            fi
+            cp "target/${{ matrix.target }}/release/$BINARY_NAME" "artifacts/$BINARY_NAME"
 
       - name: Create installer packages (Linux)
         if: contains(matrix.os, 'ubuntu')
