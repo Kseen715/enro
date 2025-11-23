@@ -189,84 +189,84 @@ jobs:
 
             # Create .rpm package
             if [ "$RPM_ARCH" = "i686" ] || [ "$RPM_ARCH" = "armv7hl" ]; then
-              echo "Building $RPM_ARCH RPM in Docker..."
-  
-              mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
-              cp "$BINARY" enro-rpm/BUILD/enro
-  
-              cat > enro-rpm/SPECS/enro.spec << EOF
-              Name:           enro
-              Version:        $VERSION
-              Release:        1%{?dist}
-              Summary:        A command-line tool for file type detection and   entropy analysis
-              License:        BSD
-              BuildArch:      $RPM_ARCH
-  
-              %description
-              A command-line tool for file type detection and entropy analysis
-      
-              %files
-              /usr/local/bin/enro
-      
-              %changelog
-              * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715>   - $VERSION-1
-              - Initial package
-              EOF
-  
-              docker run --rm \
-                  -v "$PWD/enro-rpm:/root/rpmbuild" \
-                  -w /root \
-                  almalinux:8 \
-                  /bin/bash -c "
-                  set -e
-                  dnf install -y rpm-build which
-                  rpmbuild -bb rpmbuild/SPECS/enro.spec
-                  "
-  
-              RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
-              if [ -n "$RPM_FILE" ]; then
-                  mv "$RPM_FILE" "$BINARY.rpm"
-              else
-                  echo "WARNING: No RPM file produced for $RPM_ARCH"
-              fi
+            echo "Building $RPM_ARCH RPM in Docker..."
+
+            mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
+            cp "$BINARY" enro-rpm/BUILD/enro
+
+            cat > enro-rpm/SPECS/enro.spec << EOF
+            Name:           enro
+            Version:        $VERSION
+            Release:        1%{?dist}
+            Summary:        A command-line tool for file type detection and   entropy analysis
+            License:        BSD
+            BuildArch:      $RPM_ARCH
+
+            %description
+            A command-line tool for file type detection and entropy analysis
+    
+            %files
+            /usr/local/bin/enro
+    
+            %changelog
+            * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715>   - $VERSION-1
+            - Initial package
+            EOF
+
+            docker run --rm \
+                -v "$PWD/enro-rpm:/root/rpmbuild" \
+                -w /root \
+                almalinux:8 \
+                /bin/bash -c "
+                set -e
+                dnf install -y rpm-build which
+                rpmbuild -bb rpmbuild/SPECS/enro.spec
+                "
+
+            RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
+            if [ -n "$RPM_FILE" ]; then
+                mv "$RPM_FILE" "$BINARY.rpm"
+            else
+                echo "WARNING: No RPM file produced for $RPM_ARCH"
+            fi
   
             else
-              sudo apt-get update
-              sudo apt-get install -y rpm
-  
-              mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
-              cp "$BINARY" enro-rpm/BUILD/enro
-  
-              cat > enro-rpm/SPECS/enro.spec << EOF
-              Name:           enro
-              Version:        $VERSION
-              Release:        1%{?dist}
-              Summary:        A command-line tool for file type detection and   entropy analysis
-              License:        BSD
-              BuildArch:      $RPM_ARCH
-      
-              %description
-              A command-line tool for file type detection and entropy analysis
-      
-              %files
-              /usr/local/bin/enro
-      
-              %changelog
-              * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715>   - $VERSION-1
-              - Initial package
-              EOF
-  
-              mkdir -p "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin"
-              cp "$BINARY" "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/  bin/enro"
-  
-              rpmbuild -bb enro-rpm/SPECS/enro.spec \
-                  --define "_topdir $PWD/enro-rpm" \
-                  --define "buildroot $PWD/enro-rpm/BUILDROOT/  enro-$VERSION-$RPM_ARCH"
-  
-              RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
-              if [ -n "$RPM_FILE" ]; then
-                  mv "$RPM_FILE" "$BINARY.rpm"
-              fi
+            sudo apt-get update
+            sudo apt-get install -y rpm
+
+            mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
+            cp "$BINARY" enro-rpm/BUILD/enro
+
+            cat > enro-rpm/SPECS/enro.spec << EOF
+            Name:           enro
+            Version:        $VERSION
+            Release:        1%{?dist}
+            Summary:        A command-line tool for file type detection and   entropy analysis
+            License:        BSD
+            BuildArch:      $RPM_ARCH
+    
+            %description
+            A command-line tool for file type detection and entropy analysis
+    
+            %files
+            /usr/local/bin/enro
+    
+            %changelog
+            * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715>   - $VERSION-1
+            - Initial package
+            EOF
+
+            mkdir -p "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin"
+            cp "$BINARY" "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/  bin/enro"
+
+            rpmbuild -bb enro-rpm/SPECS/enro.spec \
+                --define "_topdir $PWD/enro-rpm" \
+                --define "buildroot $PWD/enro-rpm/BUILDROOT/  enro-$VERSION-$RPM_ARCH"
+
+            RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
+            if [ -n "$RPM_FILE" ]; then
+                mv "$RPM_FILE" "$BINARY.rpm"
+            fi
             fi
 
       - name: Create installer packages (Windows)
