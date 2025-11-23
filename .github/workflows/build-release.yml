@@ -238,8 +238,8 @@ jobs:
                     dnf install -y mock rpm-build
                     usermod -a -G mock builder 2>/dev/null || true
                     echo '[build]
-                    chrootgid = $(id -g)
-                    chrootuid = $(id -u)' > /etc/mock/site-defaults.cfg
+            chrootgid = $(id -g)
+            chrootuid = $(id -u)' > /etc/mock/site-defaults.cfg
 
                     # Initialize mock chroot
                     mock -r $MOCK_CONFIG --init
