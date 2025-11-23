@@ -223,6 +223,7 @@ jobs:
                 /bin/bash -c "
                 set -e
                 dnf install -y rpm-build
+                echo '%_compatible_archs %{_arch} $RPM_ARCH' >> ~/.rpmmacros
                 rpmbuild -bb rpmbuild/SPECS/enro.spec \
                     --define '_topdir /root/rpmbuild' \
                     --define '_buildroot /root/rpmbuild/BUILDROOT/enro-$VERSION-$RPM_ARCH'"
