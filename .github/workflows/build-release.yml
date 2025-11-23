@@ -222,8 +222,8 @@ jobs:
                   "%defattr(-,root,root,-)" \
                   "/usr/local/bin/enro" > enro-rpm/SPECS/enro.spec
 
-                # Build RPM
-                rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" -bb enro-rpm/SPECS/enro.spec
+                # Build RPM (disable strip for cross-compiled binaries)
+                rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" --define "__strip /bin/true" -bb enro-rpm/SPECS/enro.spec
 
                 # Find and copy the built RPM
                 find enro-rpm -name "*.rpm" -exec cp {} "$BINARY.rpm" \;
