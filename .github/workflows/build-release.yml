@@ -220,7 +220,7 @@ jobs:
                 %post
                 chmod +x /usr/local/bin/enro
 
-                EOF
+            EOF
 
                 # Build RPM
                 rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" -bb enro-rpm/SPECS/enro.spec
