@@ -261,7 +261,7 @@ jobs:
 
             rpmbuild -bb enro-rpm/SPECS/enro.spec \
                 --define "_topdir $PWD/enro-rpm" \
-                --define "buildroot $PWD/enro-rpm/BUILDROOT/  enro-$VERSION-$RPM_ARCH"
+                --define "buildroot $PWD/enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH"
 
             RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
             if [ -n "$RPM_FILE" ]; then
