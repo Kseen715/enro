@@ -195,14 +195,10 @@ jobs:
 
                 # Create RPM build directory structure
                 mkdir -p enro-rpm/BUILD
-                mkdir -p enro-rpm/BUILDROOT/usr/local/bin
                 mkdir -p enro-rpm/SPECS
 
-                # Copy binary to BUILDROOT
-                cp "$BINARY" enro-rpm/BUILDROOT/usr/local/bin/enro
-                chmod +x enro-rpm/BUILDROOT/usr/local/bin/enro
-
                 # Create spec file using printf
+                BINARY_PATH=$(pwd)/$BINARY
                 printf "%s\n" \
                   "Name:           enro" \
                   "Version:        $VERSION" \
@@ -218,6 +214,9 @@ jobs:
                   "%build" \
                   "" \
                   "%install" \
+                  "mkdir -p %{buildroot}/usr/local/bin" \
+                  "cp $BINARY_PATH %{buildroot}/usr/local/bin/enro" \
+                  "chmod +x %{buildroot}/usr/local/bin/enro" \
                   "" \
                   "%files" \
                   "%defattr(-,root,root,-)" \
