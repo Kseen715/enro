@@ -156,19 +156,19 @@ jobs:
             if [ "${{ matrix.target }}" = "i686-unknown-linux-gnu" ]; then
                 PKG_ARCH="i386"
                 RPM_ARCH="i686"
-                MOCK_CONFIG="epel-8-i386"  # or fedora-40-i386 if available
+                MOCK_CONFIG="fedora-40-i386"
             elif [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
                 PKG_ARCH="amd64"
                 RPM_ARCH="x86_64"
-                MOCK_CONFIG="epel-8-x86_64"
+                MOCK_CONFIG="fedora-40-x86_64"
             elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
                 PKG_ARCH="arm64"
                 RPM_ARCH="aarch64"
-                MOCK_CONFIG="epel-8-aarch64"
+                MOCK_CONFIG="fedora-40-aarch64"
             elif [ "${{ matrix.target }}" = "armv7-unknown-linux-gnueabihf" ]; then
                 PKG_ARCH="armhf"
                 RPM_ARCH="armv7hl"
-                MOCK_CONFIG="epel-8-armhfp"
+                MOCK_CONFIG="fedora-40-armhfp"
             fi
 
             # Create .deb package (unchanged)
