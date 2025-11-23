@@ -213,11 +213,15 @@ jobs:
                   "%description" \
                   "A command-line tool for file type detection and entropy analysis" \
                   "" \
-                  "%files" \
-                  "/usr/local/bin/enro" \
+                  "%prep" \
                   "" \
-                  "%post" \
-                  "chmod +x /usr/local/bin/enro" > enro-rpm/SPECS/enro.spec
+                  "%build" \
+                  "" \
+                  "%install" \
+                  "" \
+                  "%files" \
+                  "%defattr(-,root,root,-)" \
+                  "/usr/local/bin/enro" > enro-rpm/SPECS/enro.spec
 
                 # Build RPM
                 rpmbuild --define "_topdir $(pwd)/enro-rpm" --define "_arch $RPM_ARCH" -bb enro-rpm/SPECS/enro.spec
