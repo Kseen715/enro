@@ -148,84 +148,111 @@ jobs:
           # Create tar.gz
           tar -czf "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.tar.gz" enro
 
-          # Create .deb package
-          mkdir -p enro-deb/usr/local/bin
-          mkdir -p enro-deb/DEBIAN
-          cp enro enro-deb/usr/local/bin/
-          chmod +x enro-deb/usr/local/bin/enro
+          # Create .deb package (always)
+            mkdir -p enro-deb/usr/local/bin enro-deb/DEBIAN
+            cp enro enro-deb/usr/local/bin/
+            chmod +x enro-deb/usr/local/bin/enro
+            cat << EOF > enro-deb/DEBIAN/control
+            Package: enro
+            Version: ${{ needs.extract-version-and-tag-check.outputs.version }}
+            Section: utils
+            Priority: optional
+            Architecture: $PKG_ARCH
+            Maintainer: D.N. Korenev
+            Description: A command-line tool for file type detection and entropy analysis
+            EOF
+            dpkg-deb --build enro-deb
+            mv enro-deb.deb "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.deb"
 
-          # Control file for .deb
-          cat << EOF > enro-deb/DEBIAN/control
-          Package: enro
-          Version: ${{ needs.extract-version-and-tag-check.outputs.version }}
-          Section: utils
-          Priority: optional
-          Architecture: $PKG_ARCH
-          Depends:
-          Maintainer: D.N. Korenev
-          Description: A command-line tool for file type detection and entropy analysis
-          EOF
+            # Create .rpm package
+            if [ "$RPM_ARCH" = "i686" ]; then
+            # --- Build i686 RPM in Docker (AlmaLinux 8) ---
+            echo "Building i686 RPM in Docker..."
 
-          dpkg-deb --build enro-deb
-          mv enro-deb.deb enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.deb
+            # Prepare RPM build tree
+            mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
 
-          # Create .rpm package
-          sudo apt-get update
-          sudo apt-get install -y rpm
+            # Write spec file (same as before)
+            cat > enro-rpm/SPECS/enro.spec << EOF
+            Name:           enro
+            Version:        ${{ needs.extract-version-and-tag-check.outputs.version }}
+            Release:        1%{?dist}
+            Summary:        A command-line tool for file type detection and entropy analysis
+            License:        BSD
+            BuildArch:      i686
 
-          mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
-          # Copy the binary to the BUILD directory with the correct name
-          cp enro enro-rpm/BUILD/enro
+            %description
+            A command-line tool for file type detection and entropy analysis
 
-          # First, create a temporary spec file using placeholders
-          cat > enro-rpm/SPECS/enro.spec.tmp << 'EOF'
-          Name:           enro
-          Version:        @VERSION@
-          Release:        1%{?dist}
-          Summary:        A command-line tool for file type detection and entropy analysis
+            %files
+            /usr/local/bin/enro
 
-          License:        BSD
-          BuildArch:      @RPM_ARCH@
+            %changelog
+            * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version-and-tag-check.outputs.version }}-1
+            - Initial package
+            EOF
 
-          %description
-          A command-line tool for file type detection and entropy analysis
+            # Copy binary
+            cp enro enro-rpm/BUILD/enro
 
-          %files
-          /usr/local/bin/enro
+            # Run AlmaLinux 8 container to build RPM
+            docker run --rm \
+                -v "$PWD/enro-rpm:/root/rpmbuild" \
+                -w /root \
+                almalinux:8 \
+                /bin/bash -c "
+                set -e
+                dnf install -y rpm-build which
+                rpmbuild -bb rpmbuild/SPECS/enro.spec
+                "
 
-          %changelog
-          * $( date "+%%Y%%m%%d" ) D.N. Korenev <https://github.com/Kseen715> - @VERSION@-1
-          - Initial package
-          EOF
+            # Copy out the RPM
+            RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
+            if [ -n "$RPM_FILE" ]; then
+                mv "$RPM_FILE" "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.rpm"
+            else
+                echo "WARNING: No RPM file produced for i686"
+            fi
 
-          # Now substitute the placeholders
-          sed -e "s|@RPM_ARCH@|$RPM_ARCH|g" \
-              -e "s|@VERSION@|${{ needs.extract-version-and-tag-check.outputs.version }}|g" \
-              enro-rpm/SPECS/enro.spec.tmp > enro-rpm/SPECS/enro.spec
+            else
+            # --- Build RPM natively (for x86_64, aarch64, armv7hl) ---
+            sudo apt-get update
+            sudo apt-get install -y rpm
 
-          # Create the necessary directories in BUILDROOT
-          mkdir -p enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin
+            mkdir -p enro-rpm/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
+            cp enro enro-rpm/BUILD/enro
 
-          # Copy the binary to the expected location in BUILDROOT
-          cp enro enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin/enro
+            cat > enro-rpm/SPECS/enro.spec << EOF
+            Name:           enro
+            Version:        ${{ needs.extract-version-and-tag-check.outputs.version }}
+            Release:        1%{?dist}
+            Summary:        A command-line tool for file type detection and entropy analysis
+            License:        BSD
+            BuildArch:      $RPM_ARCH
 
-          # Build the RPM package
-          if [ "$RPM_ARCH" = "i686" ]; then
-          rpmbuild -bb enro-rpm/SPECS/enro.spec \
-              --define "_topdir $(pwd)/enro-rpm" \
-              --define "buildroot $(pwd)/enro-rpm/BUILDROOT/enro-${{ needs.  extract-version-and-tag-check.outputs.version }}-$RPM_ARCH" \
-              --define "_build_arch_compat i686,x86_64"
-          else
-          rpmbuild -bb enro-rpm/SPECS/enro.spec \
-              --define "_topdir $(pwd)/enro-rpm" \
-              --define "buildroot $(pwd)/enro-rpm/BUILDROOT/enro-${{ needs.  extract-version-and-tag-check.outputs.version }}-$RPM_ARCH"
-          fi
+            %description
+            A command-line tool for file type detection and entropy analysis
 
-          # Find and move the RPM to current directory with a clear name
-          RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
-          if [ -n "$RPM_FILE" ]; then
-            mv "$RPM_FILE" enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.rpm
-          fi
+            %files
+            /usr/local/bin/enro
+
+            %changelog
+            * $(date "+%a %b %d %Y") D.N. Korenev <https://github.com/Kseen715> - ${{ needs.extract-version-and-tag-check.outputs.version }}-1
+            - Initial package
+            EOF
+
+            mkdir -p "enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin"
+            cp enro "enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH/usr/local/bin/enro"
+
+            rpmbuild -bb enro-rpm/SPECS/enro.spec \
+                --define "_topdir $PWD/enro-rpm" \
+                --define "buildroot $PWD/enro-rpm/BUILDROOT/enro-${{ needs.extract-version-and-tag-check.outputs.version }}-$RPM_ARCH"
+
+            RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
+            if [ -n "$RPM_FILE" ]; then
+                mv "$RPM_FILE" "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.rpm"
+            fi
+            fi
 
       - name: Create installer packages (Windows)
         if: contains(matrix.os, 'windows')
