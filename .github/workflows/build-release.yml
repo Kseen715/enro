@@ -146,11 +146,11 @@ jobs:
       - name: Create installer packages (Linux)
         if: contains(matrix.target, 'linux')
         run: |
-            cd artifacts
-
             VERSION="${{ needs.extract-version-and-tag-check.outputs.version }}"
             PLATFORM="${{ matrix.platform }}"
             BINARY="enro-$VERSION-$PLATFORM"
+
+            cd artifacts
 
             # Determine architecture based on target for packaging
             if [ "${{ matrix.target }}" = "i686-unknown-linux-gnu" ]; then
@@ -168,7 +168,7 @@ jobs:
             fi
 
             # Create tar.gz using the actual binary name
-            tar -czf "enro-$VERSION-$PLATFORM.tar.gz" "$BINARY"
+            tar -czf "$BINARY.tar.gz" "$BINARY"
 
             # Create .deb package
             mkdir -p enro-deb/usr/local/bin enro-deb/DEBIAN
@@ -185,7 +185,7 @@ jobs:
             EOF
 
             dpkg-deb --build enro-deb
-            mv enro-deb.deb "enro-$VERSION-$PLATFORM.deb"
+            mv enro-deb.deb "$BINARY.deb"
 
             # Create .rpm package
             if [ "$RPM_ARCH" = "i686" ]; then
@@ -225,7 +225,7 @@ jobs:
 
             RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
             if [ -n "$RPM_FILE" ]; then
-                mv "$RPM_FILE" "enro-$VERSION-$PLATFORM.rpm"
+                mv "$RPM_FILE" "$BINARY.rpm"
             else
                 echo "WARNING: No RPM file produced for i686"
             fi
@@ -265,17 +265,21 @@ jobs:
 
             RPM_FILE=$(find enro-rpm/RPMS -name "*.rpm" -type f)
             if [ -n "$RPM_FILE" ]; then
-                mv "$RPM_FILE" "enro-$VERSION-$PLATFORM.rpm"
+                mv "$RPM_FILE" "$BINARY.rpm"
             fi
             fi
 
       - name: Create installer packages (Windows)
         if: contains(matrix.target, 'windows')
         run: |
+          VERSION="${{ needs.extract-version-and-tag-check.outputs.version }}"
+          PLATFORM="${{ matrix.platform }}"
+          BINARY="enro-$VERSION-$PLATFORM"
+
           cd artifacts
 
           # Create zip archive
-          Compress-Archive -Path enro.exe -DestinationPath "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${{ matrix.platform }}.zip"
+          Compress-Archive -Path "$BINARY.exe" -DestinationPath "$BINARY.zip"
 
           # Create MSI installer using WiX Toolset
           # For now, we'll just create a zip as a placeholder for Windows installer
@@ -285,6 +289,10 @@ jobs:
       - name: Create installer packages (Darwin)
         if: contains(matrix.target, 'darwin')
         run: |
+          VERSION="${{ needs.extract-version-and-tag-check.outputs.version }}"
+          PLATFORM="${{ matrix.platform }}"
+          BINARY="enro-$VERSION-$PLATFORM"
+         
           cd artifacts
 
           # Create tar.gz
@@ -294,7 +302,7 @@ jobs:
             ARCH="aarch64"
           fi
 
-          tar -czf "enro-${{ needs.extract-version-and-tag-check.outputs.version }}-${ARCH}.tar.gz" enro
+          tar -czf "$BINARY.tar.gz" $BINARY
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
