@@ -257,7 +257,7 @@ jobs:
             EOF
 
             mkdir -p "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin"
-            cp "$BINARY" "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/  bin/enro"
+            cp "$BINARY" "enro-rpm/BUILDROOT/enro-$VERSION-$RPM_ARCH/usr/local/bin/enro"
 
             rpmbuild -bb enro-rpm/SPECS/enro.spec \
                 --define "_topdir $PWD/enro-rpm" \
